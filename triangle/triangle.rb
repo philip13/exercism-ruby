@@ -1,5 +1,5 @@
 class Triangle
-  attr_accessor :sides, :a, :b, :c
+  attr_reader :sides, :a, :b, :c
 
   def initialize(sides)
     @sides = sides.sort
@@ -7,9 +7,7 @@ class Triangle
   end
 
   def equilateral?
-    if a.zero? || b.zero? || c.zero?
-      return false
-    end
+    return false if a.zero? || b.zero? || c.zero?
     a == b && b == c && c == a 
   end
 

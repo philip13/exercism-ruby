@@ -1,29 +1,31 @@
-module Tournament
+class Tournament
   POINTS = { "win" => 3, "draw" => 1, "loss" => 0}
   INVERT_RESULT = { "win" => "loss", "loss" => "win", "draw" => "draw" }
 
-  
   def self.tally(input)
-    teams = Hash.new
+    new(input).tally
+  end
+
+  def initialize(input)
+    @matches = input.split("\n")
+  end
+
+  def tally
     header = "#{'Team'.ljust(31)}| MP |  W |  D |  L |  P\n"
 
-    input.each_line do |line|
-      line = line.gsub("\n", "")
-      unless line.empty?
-        row = line.split(";")
-        team1, team2, result = row[0], row[1], row[2]        
-        result_2 = INVERT_RESULT[result]
-        
-        teams = self.add_match_played(team1, result, teams)
-        teams = self.add_match_played(team2, result_2, teams)
-      end
+    teams = @matches.each_with_object({}) do |line, teams|
+      next if line.empty?
+      team1, team2, result_t1 = line.split(";")
+
+      result_t2 = INVERT_RESULT[result_t1]
+      add_match_played(team1, result_t1, teams)
+      add_match_played(team2, result_t2, teams)
     end
 
     format_rows(header, teams)
   end
 
-  def self.add_match_played(team, result, teams)
-    team = team.to_sym
+  def add_match_played(team, result, teams)
     unless teams.include?(team)
       teams[team] = { matches_played: 0, won: 0, drawn: 0, lost: 0, points: 0 }
     end
@@ -42,22 +44,24 @@ module Tournament
     return teams
   end
 
-  def self.format_rows(header, teams)
+  def format_rows(header, teams)
     output = header
     teams_sorted = teams.sort do |(team_a, stats_a), (team_b, stats_b)|
       result = stats_b[:points] <=> stats_a[:points]
-      result.zero? ? team_a.to_s <=> team_b.to_s : result
+      result.zero? ? team_a <=> team_b : result
     end.to_h
 
     teams_sorted.each_key do |team_name|
-      stats = teams[team_name.to_sym]
-      
-      output << "#{team_name.to_s.ljust(31)}|  #{stats[:matches_played]} |  #{stats[:won]} |  #{stats[:drawn]} |  #{stats[:lost]} | #{format(stats[:points])}\n"
+      stats = teams[team_name]
+      output << format("%-31s| %2d | %2d | %2d | %2d | %2d\n",
+        team_name,
+        stats[:matches_played],
+        stats[:won],
+        stats[:drawn],
+        stats[:lost],
+        stats[:points]
+      )
     end
-    output.to_s
-  end
-
-  def self.format(num)
-    num.to_s.rjust(2, ' ')
+    output
   end
 end
